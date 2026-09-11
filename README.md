@@ -62,7 +62,8 @@ Inspired by Apple's Audio Intelligence features (Siri Recap + Live Rewind), rebu
 ## Setup
 
 ```bash
-git clone <this repo> ~/pi-recap   # or copy the folder to your Pi
+sudo apt update && sudo apt install -y git   # skip if git is already installed
+git clone https://github.com/soothslayer/pi-recap.git ~/pi-recap
 cd ~/pi-recap
 chmod +x install.sh
 ./install.sh
