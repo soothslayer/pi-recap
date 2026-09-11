@@ -1,0 +1,58 @@
+# pi-recap configuration. Environment variables (see .env.example) override starred values.
+
+audio:
+  device: null            # null = default input device; or an int index / name substring
+  sample_rate: 16000      # whisper-native; do not change unless you know why
+  channels: 1
+  vad_aggressiveness: 2   # 0 (least) - 3 (most aggressive). 2 is a good default.
+  pre_speech_padding_ms: 300    # audio kept from just before speech starts
+  post_speech_padding_ms: 500   # silence tolerated before a segment is closed
+  max_segment_seconds: 120      # force-close very long segments so summaries stay fresh
+
+whisper:
+  # Pi 5: "base.en" (default) or "turbo" (faster + better, needs ~1-2 GB RAM).
+  # Pi 4: "tiny.en" or "base.en". English-only models (.en) are smaller/faster.
+  model: "base.en"
+  compute_type: "int8"    # int8 keeps CPU inference fast on ARM
+  device: "cpu"
+  # LAN transcription offload (optional): URL of a whisper.cpp server on your
+  # LAN, e.g. "http://192.168.1.50:8080" (its /inference endpoint). When set,
+  # each segment is POSTed there first; on any failure the local model above
+  # is used instead. Audio never leaves your LAN in this mode.
+  whisper_remote_url: ""
+  whisper_remote_timeout_s: 30        # per-segment POST timeout
+  whisper_remote_check_interval_s: 60  # back off this long after a remote failure
+
+llm:
+  backend: "ollama"       # "ollama" (local, default) or "openai" (any OpenAI-compatible API)
+  ollama_host: "http://localhost:11434"   # *OLLAMA_HOST
+  ollama_model: "llama3.1:8b"             # needs ~6 GB free RAM; on 4 GB Pi use llama3.2:3b
+  openai_base_url: "https://api.openai.com/v1"  # *OPENAI_BASE_URL
+  openai_api_key: ""                      # *OPENAI_API_KEY (keep in .env, not here)
+  openai_model: "gpt-4o-mini"
+  timeout_seconds: 120
+  # Private mode: when true, NOTHING may leave the LAN. The summarizer will
+  # refuse the cloud ("openai") backend and use only local Ollama; if Ollama
+  # is unreachable, episodes are queued unsummarized (marked pending) rather
+  # than silently falling back to the cloud. Toggleable at runtime from the
+  # web UI (stored in the kv table); this value is the startup default.
+  private_mode: false
+
+recap:
+  episode_gap_minutes: 10       # silence longer than this starts a new conversation episode
+  rewind_buffer_seconds: 15     # Live Rewind window (RAM only, never on disk)
+  delete_audio_after_transcription: true  # Apple-style: wav bytes live in RAM only,
+                                          # transcribed, then released. Set false to also
+                                          # keep debug wavs under data/debug_audio/
+  data_dir: "data"              # sqlite db + (optional) debug audio live here
+  # sync_dir: every episode and daily recap is exported here as Markdown.
+  # Share this folder with Syncthing to get recaps on your phone/laptop
+  # with no cloud account involved (see README "Syncing recaps...").
+  sync_dir: "recaps"
+  rewind_chime: true            # play a short audible chime on the Pi when a
+                                # rewind is served, so people nearby know the
+                                # last 15 s were just pulled up (Apple-style)
+  chime_device: null            # null = system default output; int index or name substring
+  web_host: "0.0.0.0"
+  web_port: 8080
+  flask_secret: "change-me"     # *FLASK_SECRET

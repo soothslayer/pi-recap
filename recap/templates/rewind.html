@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Live Rewind — pi-recap{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>⏪ Live Rewind</h3>
+  <p class="summary">Transcribes the last ~15 seconds of audio from the recorder's in-memory buffer. Audio is never saved — only this text.</p>
+  <div class="row">
+    <button class="btn" id="rewindBtn" onclick="doRewind()">What was just said?</button>
+  </div>
+  <div class="rewind-box" id="rewindText">{{ text }}</div>
+  <div class="meta" id="rewindAt">{% if at %}captured {{ at }}{% endif %}</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function doRewind(){
+  const btn = document.getElementById('rewindBtn');
+  btn.disabled = true; btn.textContent = 'Listening…';
+  await fetch('/api/rewind', {method:'POST'});
+  // Poll until the recorder process fulfills the request (max ~20s).
+  for(let i=0;i<20;i++){
+    await new Promise(r=>setTimeout(r,1000));
+    const r = await fetch('/api/status'); const s = await r.json();
+    if(s.last_rewind_text){
+      document.getElementById('rewindText').textContent = s.last_rewind_text;
+      document.getElementById('rewindAt').textContent = 'captured ' + (s.last_rewind_at||'');
+      break;
+    }
+  }
+  btn.disabled = false; btn.textContent = 'What was just said?';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ ep.title or "Episode" }} — pi-recap{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>{{ ep.title or "Untitled conversation" }}</h3>
+  <div class="meta">{{ ep.started_at }} → {{ ep.ended_at }} · audio deleted ✓</div>
+  {% if ep.summary %}<p class="summary">{{ ep.summary }}</p>{% endif %}
+</div>
+{% if ep.key_points %}
+<div class="card">
+  <h3>Key points</h3>
+  <ul class="points">{% for kp in ep.key_points %}<li>{{ kp }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% if ep.action_items %}
+<div class="card">
+  <h3>Action items</h3>
+  <ul class="points">{% for ai in ep.action_items %}<li>{{ ai }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+<div class="card">
+  <h3>Transcript</h3>
+  <pre class="transcript">{{ ep.transcript or "(empty)" }}</pre>
+</div>
+<div class="row">
+  <button class="btn danger" onclick="deleteEpisode({{ ep.id }})">Delete episode</button>
+  <a class="btn ghost" href="/" style="text-decoration:none">← Back</a>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function deleteEpisode(id){
+  if(!confirm('Delete this episode and its notes?')) return;
+  const r = await fetch('/api/delete/' + id, {method:'POST'});
+  if(r.ok) location.href = '/'; else alert('Delete failed');
+}
+</script>
+{% endblock %}

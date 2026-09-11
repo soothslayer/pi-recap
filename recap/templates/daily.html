@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Daily recaps — pi-recap{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>Daily recaps</h3>
+  {% if dailies %}
+    {% for d in dailies %}
+      <div><a href="/daily/{{ d.date }}">{{ d.date }}</a></div>
+    {% endfor %}
+  {% else %}
+    <p class="summary">No daily recaps yet — they generate at 06:00, or run <code>python -m recap.daily</code>.</p>
+  {% endif %}
+</div>
+{% if daily %}
+<div class="card">
+  <pre class="transcript" style="max-height:none">{{ daily.markdown }}</pre>
+</div>
+{% endif %}
+{% endblock %}

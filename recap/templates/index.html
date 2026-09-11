@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Episodes — pi-recap{% endblock %}
+{% block content %}
+<form class="search" method="get" action="/">
+  <input type="text" name="q" placeholder="Search conversations…" value="{{ q }}">
+  <button type="submit">Search</button>
+</form>
+{% if episodes %}
+  {% for ep in episodes %}
+  <div class="card">
+    <h3><a href="/episode/{{ ep.id }}">{{ ep.title or "Untitled conversation" }}</a></h3>
+    <div class="meta">{{ ep.started_at }} → {{ ep.ended_at }} · audio deleted ✓</div>
+    {% if ep.summary %}<p class="summary">{{ ep.summary }}</p>{% endif %}
+    {% if ep.key_points %}
+    <ul class="points">
+      {% for kp in ep.key_points[:3] %}<li>{{ kp }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="card"><p class="summary">No conversations captured yet. Start <code>python -m recap.main</code> and get talking.</p></div>
+{% endif %}
+{% endblock %}

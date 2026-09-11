@@ -1,0 +1,16 @@
+# pi-recap dependencies — keep light and CPU-friendly for Raspberry Pi (arm64).
+# faster-whisper bundles ctranslate2; on Pi it runs CPU-only with int8 quantization.
+faster-whisper>=1.0,<2.0
+# Audio input
+sounddevice>=0.4,<0.6
+# Maintained wheels fork of webrtcvad (the original package has no arm64 wheels)
+webrtcvad-wheels>=2.0,<3.0
+# Web UI
+flask>=3.0,<4.0
+# Config + env
+pyyaml>=6.0,<7.0
+python-dotenv>=1.0,<2.0
+# Numeric work (audio buffers)
+numpy>=1.24,<3.0
+# LLM HTTP clients (Ollama + OpenAI-compatible)
+requests>=2.31,<3.0

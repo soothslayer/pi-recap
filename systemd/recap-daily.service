@@ -1,0 +1,10 @@
+[Unit]
+Description=pi-recap daily recap generator
+After=network.target
+
+[Service]
+Type=oneshot
+User=pi
+WorkingDirectory=/home/pi/pi-recap
+ExecStart=/home/pi/pi-recap/venv/bin/python -m recap.daily
+Environment=PYTHONUNBUFFERED=1
