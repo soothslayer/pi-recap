@@ -8,7 +8,7 @@ echo "==> pi-recap installer"
 
 echo "==> [1/5] Installing system packages (portaudio, ffmpeg, venv)…"
 sudo apt update
-sudo apt install -y portaudio19-dev ffmpeg python3-venv python3-pip curl
+sudo apt install -y git portaudio19-dev ffmpeg python3-venv python3-pip curl
 
 echo "==> [2/5] Creating Python virtualenv…"
 if [ ! -d venv ]; then
