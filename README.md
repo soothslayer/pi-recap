@@ -72,9 +72,11 @@ chmod +x install.sh
 `install.sh` installs system deps (`portaudio19-dev`, `ffmpeg`), creates a venv, and installs Python deps. Then:
 
 ```bash
-# 1. Install Ollama (local LLM) and pull a model
+# 1. Set up Ollama (local LLM) — recommended on your Mac mini, not the Pi.
+#    See "Summarization on a Mac mini" below, then come back here.
+#    Quick alternative: install on the Pi itself (only 3B models fit):
 curl -fsSL https://ollama.com/install.sh | sh
-ollama pull llama3.1:8b        # ~4.7 GB; needs ~6-8 GB RAM free on the Pi
+ollama pull llama3.2:3b
 
 # 2. Review config
 cp config.yaml config.yaml     # already present; edit to taste
@@ -108,7 +110,25 @@ The daily timer runs `python -m recap.daily` at 06:00 for the previous day.
 | Pi 5 (8 GB) | `base.en` (default) or `turbo` | `turbo` is faster and more accurate; needs ~1-2 GB RAM |
 | Pi 4 (4 GB+) | `tiny.en` or `base.en` | `base.en` works but expect real-time lag on long segments |
 
-Set it in `config.yaml` under `whisper.model`. Ollama's `llama3.1:8b` wants ~6 GB free RAM — on a 4 GB Pi, use a smaller model like `llama3.2:3b` or `qwen2.5:3b`, or switch the backend to an OpenAI-compatible API.
+Set it in `config.yaml` under `whisper.model`. For summarization, run Ollama on your Mac mini (see below) with `qwen3:4b` — `llama3.1:8b` wants ~6 GB free RAM, too tight for an 8 GB Mac. If Ollama must run on the Pi itself, use `llama3.2:3b`.
+
+### Summarization on a Mac mini (recommended)
+
+The Pi is great at capture + transcription but too small to host an LLM comfortably. Run Ollama on an 8 GB Mac mini (or any always-on Mac) on your LAN instead:
+
+**On the Mac mini:**
+1. Install Ollama from [ollama.com](https://ollama.com) (macOS app or `brew install ollama`).
+2. Make it listen on the LAN: `launchctl setenv OLLAMA_HOST 0.0.0.0`, then restart Ollama (or `OLLAMA_HOST=0.0.0.0 ollama serve` if running it manually).
+3. `ollama pull qwen3:4b` — the sweet spot for 8 GB: ~3 GB RAM, ~15–25 tok/s, and it follows the summarizer's strict-JSON format reliably.
+4. Stop the Mac from sleeping: System Settings → Energy → "Prevent automatic sleeping when the display is off" (or `sudo pmset -c disablesleep 1`).
+
+**On the Pi** — point pi-recap at it in `config.yaml` (or `.env`):
+```yaml
+llm:
+  ollama_host: "http://<mac-mini-ip>:11434"
+  ollama_model: "qwen3:4b"
+```
+Verify with `curl http://<mac-mini-ip>:11434/api/tags`. If the Mac is unreachable, episodes fall back to the extractive stub (or queue as pending in private mode), so the pipeline keeps running.
 
 ## Usage
 
@@ -139,7 +159,7 @@ Bonus: the Markdown files drop straight into an [Obsidian](https://obsidian.md) 
 
 - **"No audio input device found"** — plug in the USB mic, then check `venv/bin/python -c "import sounddevice as sd; print(sd.query_devices())"`. Make sure your user is in the `audio` group: `sudo usermod -aG audio $USER` (log out/in after).
 - **Transcription is slow / lagging** — drop to a smaller whisper model (`tiny.en`) or shorten `max_segment_seconds` in `config.yaml`. Alternative: offload transcription to a faster machine on your LAN — run a [whisper.cpp](https://github.com/ggerganov/whisper.cpp) server there and set `whisper.whisper_remote_url` (e.g. `http://192.168.1.50:8080`). The Pi POSTs each segment to `/inference` and silently falls back to its local model on any failure, so the pipeline keeps working if the server goes down. Audio never leaves your LAN in this mode.
-- **Ollama out of memory** — use a smaller model (`ollama pull llama3.2:3b` and set `llm.ollama_model`), or point `llm.backend: openai` at an OpenAI-compatible endpoint.
+- **Ollama out of memory** — use a smaller model (`ollama pull llama3.2:3b` and set `llm.ollama_model`), move Ollama to your Mac mini (see above), or point `llm.backend: openai` at an OpenAI-compatible endpoint.
 - **Summaries come back empty / malformed** — the summarizer retries once, then falls back to an extractive stub so the pipeline never crashes. Check Ollama is running: `curl localhost:11434/api/tags`.
 - **Web UI unreachable** — the service binds `0.0.0.0:8080` by default; check `sudo systemctl status recap` and your Pi's firewall.
 - **Nothing is being captured** — check the pause flag in the UI; `capture_paused` in the `kv` table must be `0`.

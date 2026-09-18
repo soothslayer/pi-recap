@@ -25,8 +25,14 @@ whisper:
 
 llm:
   backend: "ollama"       # "ollama" (local, default) or "openai" (any OpenAI-compatible API)
+  # Where Ollama runs. Recommended: your Mac mini M1 (8 GB) on the LAN, e.g.
+  # "http://192.168.4.50:11434" — the Pi is too small to host the LLM itself.
+  # Only use "http://localhost:11434" if Ollama runs on the Pi.
   ollama_host: "http://localhost:11434"   # *OLLAMA_HOST
-  ollama_model: "llama3.1:8b"             # needs ~6 GB free RAM; on 4 GB Pi use llama3.2:3b
+  # qwen3:4b is the sweet spot for an 8 GB Mac mini host (~3 GB RAM, ~15-25 tok/s)
+  # and handles the summarizer's strict-JSON mode well. llama3.1:8b wants ~6 GB
+  # free — too tight for 8 GB. If Ollama must run on the Pi itself, use llama3.2:3b.
+  ollama_model: "qwen3:4b"
   openai_base_url: "https://api.openai.com/v1"  # *OPENAI_BASE_URL
   openai_api_key: ""                      # *OPENAI_API_KEY (keep in .env, not here)
   openai_model: "gpt-4o-mini"
